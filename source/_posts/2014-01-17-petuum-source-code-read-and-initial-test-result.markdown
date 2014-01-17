@@ -6,7 +6,7 @@ comments: true
 categories: 
 ---
 
-这几天为了测好Petuum，花了一点时间看了一下Petuum源码，把其中的精华跟大家分享一下。
+这几天为了测好[Petuum](http://petuum.org/)，花了一点时间看了一下Petuum源码，把其中的精华跟大家分享一下。
 
 Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码，其实就只实现了一个LDA，外加一个Hello world。目前没有一个pull request和issue，另外已经很久（20天）没有更新了。发现C++写的在github上不是很受欢迎，GraphLab也很少有pull request。相比之下Spark的Pull request之多，热度完全不同。
 
@@ -58,7 +58,7 @@ Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码�
 
 9. 关闭线程，table group，并结束
 
-整个过程中，8是实际干活的，也是唯一并行的地方。将这部分放大如下：
+**整个过程中，8是实际干活的，也是唯一并行的地方。将这部分放大如下：**
 
 1. 初始化每个线程拥有的数据，即数据分片，每个thread处理一片
 
@@ -72,7 +72,7 @@ Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码�
 
 6. 结束，输出结果
 
-其中5是主要干活的，这里每个thread针对自己的一片文件进行sampling操作。该部分放大如下：
+**其中5是主要干活的，这里每个thread针对自己的一片文件进行sampling操作。该部分放大如下：**
 
 1. 初始化wordsampler
 
@@ -99,6 +99,6 @@ Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码�
 
 - opLog的混合在server文件中
 
-整个工程目前只有这些内容。其他的dynamic scheduler之类的统统没有。论文里号称matrix factorization，以及coordinate descent之类的测试也没见着。不过整体用C++写还是蛮挑战的，用scala+akka百来行就能实现差不多的功能。
+整个工程目前只有这些内容。其他的dynamic scheduler之类的统统没有。论文里号称matrix factorization，以及coordinate descent之类的测试也没见着。不过整体用C++写还是蛮挑战的，用scala+[akka](http://akka.io/)百来行就能实现差不多的功能。
 
 之前一些简单的测试效果感觉不是很满意，例如stale增大后likelihood抖动很严重，而且效果对比BSP没有明显的变好太多。后续我会详细测试一下这个效果。
