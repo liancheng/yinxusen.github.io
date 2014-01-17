@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Petuum: Source Code Read and Initial Test Result - wtf AI ?</title>
+  <meta name="author" content="Xusen">
+
+  
+  <meta name="description" content="这几天为了测好Petuum，花了一点时间看了一下Petuum源码，把其中的精华跟大家分享一下。 Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码，其实就只实现了一个LDA，外加一个Hello world。目前没有一个pull request和issue，另外已经很久（ &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://yinxusen.github.io/blog/2014/01/17/petuum-source-code-read-and-initial-test-result">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="wtf AI ?" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">wtf AI ?</a></h1>
+  
+    <h2>Gee...  I don't know what AI means...</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:yinxusen.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/aboutme">About Me</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Petuum: Source Code Read and Initial Test Result</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-17T18:40:01+08:00" pubdate data-updated="true">Jan 17<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>这几天为了测好Petuum，花了一点时间看了一下Petuum源码，把其中的精华跟大家分享一下。</p>
+
+<p>Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码，其实就只实现了一个LDA，外加一个Hello world。目前没有一个pull request和issue，另外已经很久（20天）没有更新了。发现C++写的在github上不是很受欢迎，GraphLab也很少有pull request。相比之下Spark的Pull request之多，热度完全不同。</p>
+
+<p><strong>一级目录有：</strong></p>
+
+<ul>
+<li><p>Apps：LDA以及Hello world的具体实现</p></li>
+<li><p>Machinefiles：服务器worker的配置</p></li>
+<li><p>Scripts：启动/关闭job的脚本</p></li>
+<li><p>Src：主要的源码</p></li>
+<li><p>Third_party：编译时拉下来的第三方库</p></li>
+</ul>
+
+
+<p><strong>Src下共有以下几个代码目录：</strong></p>
+
+<ul>
+<li><p>Comm_handler：主要是命令行参数解析，ZMQ配置等</p></li>
+<li><p>Consistency：一致性控制、一致性策略，以及操作日志记录</p></li>
+<li><p>Include：头文件集合</p></li>
+<li><p>Proxy：client代理和server代理。两者用来RPC通信，类似于我写的SSP中的akka框架中的一小部分功能</p></li>
+<li><p>Server：参数服务器，其实就是一些table的集合（允许多个参数服务器存在，可以进行参数的partition）</p></li>
+<li><p>Storage：table的存储，cache，以及还入换出策略</p></li>
+<li><p>Util：逻辑时钟vector clock，就是Dynamo中的策略，以及一些小组件</p></li>
+</ul>
+
+
+<p><strong>以LDA为例（也没有别的例子），其大体逻辑如下：</strong></p>
+
+<ol>
+<li><p>初始化tablegroup，用于存储一系列table</p></li>
+<li><p>注册主线程</p></li>
+<li><p>在tableGroup中创建table</p></li>
+<li><p>创建LDA sampler</p></li>
+<li><p>sampler读数据（直接读到内存中，而且是压缩格式，只读取字数总量）</p></li>
+<li><p>创建sampling的线程组</p></li>
+<li><p>在线程组创建线程，并绑定在runSampling的函数上</p></li>
+<li><p>执行这些线程</p></li>
+<li><p>关闭线程，table group，并结束</p></li>
+</ol>
+
+
+<p>整个过程中，8是实际干活的，也是唯一并行的地方。将这部分放大如下：</p>
+
+<ol>
+<li><p>初始化每个线程拥有的数据，即数据分片，每个thread处理一片</p></li>
+<li><p>检查每个线程状态</p></li>
+<li><p>向参数服务器注册线程</p></li>
+<li><p>初始化topic</p></li>
+<li><p>进入sampling主循环</p></li>
+<li><p>结束，输出结果</p></li>
+</ol>
+
+
+<p>其中5是主要干活的，这里每个thread针对自己的一片文件进行sampling操作。该部分放大如下：</p>
+
+<ol>
+<li><p>初始化wordsampler</p></li>
+<li><p>采样一次迭代</p></li>
+<li><p>计算似然度</p></li>
+<li><p>barrier混合当前状态</p></li>
+</ol>
+
+
+<p><strong>这里有一些取巧的地方，也是表现处SSP的地方。</strong></p>
+
+<p>首先是初始化wordsampler的时候，需要从server获取最新的参数，这时参数请求不是发给server，而是发给本thread的cache，本thread cache合法则使用，否则使用本process的cache，合法则使用，否则才去server请求参数。（合法与否通过iteration的步子是否过于stale判断）。而向server请求参数也不是直接发送，是由clientProxy向serverProxy请求，serverProxy向server群体广播这个消息，拿到参数值。</p>
+
+<p>其次是每次迭代之后首先更新本地cache，即read-my-write。之后混合当前状态，这个混合只是个“建议混合”，本质上是将本次操作的日志记录到opLog中。opLog中定义的向server更新的操作只有两个：INC和PUT，一个用于增量，一个用于修改。而每当table调用iterate函数的时候，会引导到consistency_controller类的DoIterate函数，随机触发背后clientProxy的sendOpLog函数，该函数通过RPC发送序列化之后的opLog给serverProxy，之后交由适当的server反序列化并apply到自身。
+之后是一些注意事项：</p>
+
+<ul>
+<li><p>clientProxy 用作模拟RPC call，发送请求获得参数</p></li>
+<li><p>只在headclient上进行doc likelihood计算，而每个线程计算自己的localwordlikelihood</p></li>
+<li><p>真正对table的远程操作是在fast_word_sampler搞定的。</p></li>
+<li><p>clientproxy 负责SendOpLog 到server，而这个调用是在每次table调用Iterate的时候用到的。</p></li>
+<li><p>opLog的混合在server文件中</p></li>
+</ul>
+
+
+<p>整个工程目前只有这些内容。其他的dynamic scheduler之类的统统没有。论文里号称matrix factorization，以及coordinate descent之类的测试也没见着。不过整体用C++写还是蛮挑战的，用scala+akka百来行就能实现差不多的功能。</p>
+
+<p>之前一些简单的测试效果感觉不是很满意，例如stale增大后likelihood抖动很严重，而且效果对比BSP没有明显的变好太多。后续我会详细测试一下这个效果。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Xusen</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-17T18:40:01+08:00" pubdate data-updated="true">Jan 17<span>th</span>, 2014</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinxusen.github.io/blog/2014/01/17/petuum-source-code-read-and-initial-test-result/" data-via="" data-counturl="http://yinxusen.github.io/blog/2014/01/17/petuum-source-code-read-and-initial-test-result/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/01/17/adl45-meeting-record/" title="Next Post: ADL45 Meeting Record">ADL45 Meeting Record &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About Me</h1>
+  <p>When machine learning meets system.</p>
+  <p>新浪微博: <a href="http://weibo.com/yinxusen">@yinxusen</a><br/>
+     LinkedIn: <a href="http://www.linkedin.com/in/xusenyin">Xusen Yin</a><br/>
+     Github: <a href="https://github.com/yinxusen">@yinxusen</a>
+  </p>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/17/adl45-meeting-record/">ADL45 Meeting Record</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/17/petuum-source-code-read-and-initial-test-result/">Petuum: Source Code Read and Initial Test Result</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Xusen -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

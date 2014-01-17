@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>wtf AI ?</title>
+  <title>ADL45 Meeting Record - wtf AI ?</title>
   <meta name="author" content="Xusen">
 
   
@@ -19,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://yinxusen.github.io">
+  <link rel="canonical" href="http://yinxusen.github.io/blog/2014/01/17/adl45-meeting-record">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="wtf AI ?" type="application/atom+xml">
@@ -65,15 +65,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2014/01/17/adl45-meeting-record/">ADL45 Meeting Record</a></h1>
+      <h1 class="entry-title">ADL45 Meeting Record</h1>
     
     
       <p class="meta">
@@ -96,7 +93,7 @@
   </header>
 
 
-  <div class="entry-content"><p>12月17-18日参加了计算机学会组织的<a href="http://www.ccf.org.cn/sites/ccf/xhdtnry.jsp?contentId=2771337645909">推荐系统前沿课程</a>，来自工业界和学术界前沿的诸位专家大牛们分享了实践和理论模型等。受益良多，趁着余热先给大家一个介绍，稍后我拿到了slides可以继续完善。疏漏之处在所难免，还请大家谅解。
+<div class="entry-content"><p>12月17-18日参加了计算机学会组织的<a href="http://www.ccf.org.cn/sites/ccf/xhdtnry.jsp?contentId=2771337645909">推荐系统前沿课程</a>，来自工业界和学术界前沿的诸位专家大牛们分享了实践和理论模型等。受益良多，趁着余热先给大家一个介绍，稍后我拿到了slides可以继续完善。疏漏之处在所难免，还请大家谅解。
 课程列表：</p>
 
 <ol>
@@ -250,22 +247,16 @@
 
 <p>总体来看，推荐系统行业还是呈现一片欣欣向荣的场面。作为下一代搜索引擎的推荐系统，自一出现就一直是关注的焦点，同时也是业界和学术界的宠儿。RecSys大会的出现表现了推荐系统在学术界的活力，从推荐系统出发，同时推进了大规模矩阵分析，大规模特征提取，大规模分布式框架，用户画像提取，全网数据融合，多源、异质网路分析，大规模文本分析挖掘，数据有效性、隐私与安全的分析，隐变量模型、图模型分析等等一系列技术的再开发与再进步。但是也要看到，学术界工业界缺乏交流引起的巨大鸿沟，优雅的学术艺术和实干的工业应用之间无法相互理解，学术成果难以转化，工业应用不易提升。徘回在两者的边缘，作者不断感受到系统才是经济基础，算法是上层建筑。没有经济基础，只求上层建筑的做法只是不断筑起空中楼阁，没有好故事可以讲，没有好问题可以解，没有好成果可以转化。只求经济基础不求上层建筑也是不可取，不在理解上层建筑的情况下一味追求经济基础的“大”和“快”，有可能偏离实际，不切和应用，得到的只能是一些preliminary的结果，不具有代表性。推荐系统问题是个实际问题，那就要放到实际场景中去看，同时又是个学术问题，有很多未知的技术方法等待被发现，两者互相结合才能做到真正优雅可用。</p>
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/01/17/petuum-source-code-read-and-initial-test-result/">Petuum: Source Code Read and Initial Test Result</a></h1>
-    
-    
-      <p class="meta">
-        
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Xusen</span></span>
+
+      
 
 
 
@@ -277,110 +268,32 @@
   
 
 
-<time datetime="2014-01-17T18:40:01+08:00" pubdate data-updated="true">Jan 17<span>th</span>, 2014</time>
-        
-      </p>
+<time datetime="2014-01-17T18:49:47+08:00" pubdate data-updated="true">Jan 17<span>th</span>, 2014</time>
+      
+
+
+    </p>
     
-  </header>
-
-
-  <div class="entry-content"><p>这几天为了测好Petuum，花了一点时间看了一下Petuum源码，把其中的精华跟大家分享一下。</p>
-
-<p>Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码，其实就只实现了一个LDA，外加一个Hello world。目前没有一个pull request和issue，另外已经很久（20天）没有更新了。发现C++写的在github上不是很受欢迎，GraphLab也很少有pull request。相比之下Spark的Pull request之多，热度完全不同。</p>
-
-<p><strong>一级目录有：</strong></p>
-
-<ul>
-<li><p>Apps：LDA以及Hello world的具体实现</p></li>
-<li><p>Machinefiles：服务器worker的配置</p></li>
-<li><p>Scripts：启动/关闭job的脚本</p></li>
-<li><p>Src：主要的源码</p></li>
-<li><p>Third_party：编译时拉下来的第三方库</p></li>
-</ul>
-
-
-<p><strong>Src下共有以下几个代码目录：</strong></p>
-
-<ul>
-<li><p>Comm_handler：主要是命令行参数解析，ZMQ配置等</p></li>
-<li><p>Consistency：一致性控制、一致性策略，以及操作日志记录</p></li>
-<li><p>Include：头文件集合</p></li>
-<li><p>Proxy：client代理和server代理。两者用来RPC通信，类似于我写的SSP中的akka框架中的一小部分功能</p></li>
-<li><p>Server：参数服务器，其实就是一些table的集合（允许多个参数服务器存在，可以进行参数的partition）</p></li>
-<li><p>Storage：table的存储，cache，以及还入换出策略</p></li>
-<li><p>Util：逻辑时钟vector clock，就是Dynamo中的策略，以及一些小组件</p></li>
-</ul>
-
-
-<p><strong>以LDA为例（也没有别的例子），其大体逻辑如下：</strong></p>
-
-<ol>
-<li><p>初始化tablegroup，用于存储一系列table</p></li>
-<li><p>注册主线程</p></li>
-<li><p>在tableGroup中创建table</p></li>
-<li><p>创建LDA sampler</p></li>
-<li><p>sampler读数据（直接读到内存中，而且是压缩格式，只读取字数总量）</p></li>
-<li><p>创建sampling的线程组</p></li>
-<li><p>在线程组创建线程，并绑定在runSampling的函数上</p></li>
-<li><p>执行这些线程</p></li>
-<li><p>关闭线程，table group，并结束</p></li>
-</ol>
-
-
-<p>整个过程中，8是实际干活的，也是唯一并行的地方。将这部分放大如下：</p>
-
-<ol>
-<li><p>初始化每个线程拥有的数据，即数据分片，每个thread处理一片</p></li>
-<li><p>检查每个线程状态</p></li>
-<li><p>向参数服务器注册线程</p></li>
-<li><p>初始化topic</p></li>
-<li><p>进入sampling主循环</p></li>
-<li><p>结束，输出结果</p></li>
-</ol>
-
-
-<p>其中5是主要干活的，这里每个thread针对自己的一片文件进行sampling操作。该部分放大如下：</p>
-
-<ol>
-<li><p>初始化wordsampler</p></li>
-<li><p>采样一次迭代</p></li>
-<li><p>计算似然度</p></li>
-<li><p>barrier混合当前状态</p></li>
-</ol>
-
-
-<p><strong>这里有一些取巧的地方，也是表现处SSP的地方。</strong></p>
-
-<p>首先是初始化wordsampler的时候，需要从server获取最新的参数，这时参数请求不是发给server，而是发给本thread的cache，本thread cache合法则使用，否则使用本process的cache，合法则使用，否则才去server请求参数。（合法与否通过iteration的步子是否过于stale判断）。而向server请求参数也不是直接发送，是由clientProxy向serverProxy请求，serverProxy向server群体广播这个消息，拿到参数值。</p>
-
-<p>其次是每次迭代之后首先更新本地cache，即read-my-write。之后混合当前状态，这个混合只是个“建议混合”，本质上是将本次操作的日志记录到opLog中。opLog中定义的向server更新的操作只有两个：INC和PUT，一个用于增量，一个用于修改。而每当table调用iterate函数的时候，会引导到consistency_controller类的DoIterate函数，随机触发背后clientProxy的sendOpLog函数，该函数通过RPC发送序列化之后的opLog给serverProxy，之后交由适当的server反序列化并apply到自身。
-之后是一些注意事项：</p>
-
-<ul>
-<li><p>clientProxy 用作模拟RPC call，发送请求获得参数</p></li>
-<li><p>只在headclient上进行doc likelihood计算，而每个线程计算自己的localwordlikelihood</p></li>
-<li><p>真正对table的远程操作是在fast_word_sampler搞定的。</p></li>
-<li><p>clientproxy 负责SendOpLog 到server，而这个调用是在每次table调用Iterate的时候用到的。</p></li>
-<li><p>opLog的混合在server文件中</p></li>
-</ul>
-
-
-<p>整个工程目前只有这些内容。其他的dynamic scheduler之类的统统没有。论文里号称matrix factorization，以及coordinate descent之类的测试也没见着。不过整体用C++写还是蛮挑战的，用scala+akka百来行就能实现差不多的功能。</p>
-
-<p>之前一些简单的测试效果感觉不是很满意，例如stale增大后likelihood抖动很严重，而且效果对比BSP没有明显的变好太多。后续我会详细测试一下这个效果。</p>
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://yinxusen.github.io/blog/2014/01/17/adl45-meeting-record/" data-via="" data-counturl="http://yinxusen.github.io/blog/2014/01/17/adl45-meeting-record/" >Tweet</a>
+  
+  
+  
 </div>
-  
-  
 
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/01/17/petuum-source-code-read-and-initial-test-result/" title="Previous Post: Petuum: Source Code Read and Initial Test Result">&laquo; Petuum: Source Code Read and Initial Test Result</a>
+      
+      
+    </p>
+  </footer>
+</article>
 
-    </article>
-  
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
 </div>
+
 <aside class="sidebar">
   
     <section>
@@ -412,6 +325,7 @@
 
   
 </aside>
+
 
     </div>
   </div>
