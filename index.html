@@ -9,8 +9,7 @@
   <meta name="author" content="Xusen">
 
   
-  <meta name="description" content="12月17-18日参加了计算机学会组织的推荐系统前沿课程，来自工业界和学术界前沿的诸位专家大牛们分享了实践和理论模型等。受益良多，趁着余热先给大家一个介绍，稍后我拿到了slides可以继续完善。疏漏之处在所难免，还请大家谅解。
-课程列表： Social recommendation systems &hellip;">
+  <meta name="description" content="NOTE This PR is only a request for comments, since it introduces some minor incompatible interface change in MLlib. Update 2014-01-16 The inner &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +66,233 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/01/18/how-to-use-spark-for-ml-algorithms-and-why/">How to Use Spark for ML Algorithms and Why ?</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-18T16:33:43+08:00" pubdate data-updated="true">Jan 18<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><strong>NOTE</strong> This PR is only a request for comments, since it introduces some minor incompatible interface change in MLlib.</p>
+
+<p><strong>Update 2014-01-16</strong> The inner iteration counts of local optimization is also an important parameter, which is related to the convergence rate. I will add some new experiments about it ASAP.</p>
+
+<p><strong>Update 2014-01-16 [2]</strong>Using <code>data.cache</code> brings a great performance gain, BSP+ is worse than original version then.</p>
+
+<p><strong>Update 2014-01-17</strong> When we removing the straggler of BSP+, BSP+ is better than original version. Straggler comes from the <code>sc.textFile</code>, HDFS gives bad answer. Seems that SSP is more reasonable and useful now. Besides, inner iteration is also a big factor. For our data with 15 partitions, 60 seems to be the best inner iteration.</p>
+
+<p>If there is no straggler at all, the costs caused by framework must be higher than the inner iteration expansion. Meanwhile, the uncertainty caused by high parallelism is made up by the acceleration.</p>
+
+<p><strong>Update 2014-01-18</strong> We also find that there are some influences come from the partition number. As we said earlier, there is a inflection point.</p>
+
+<p><strong>factors we found</strong></p>
+
+<ul>
+<li>number of partitions</li>
+<li>straggler (YJP profiling)</li>
+<li>inner iteration</li>
+<li>outer iteration</li>
+</ul>
+
+
+<p><strong>two different usages of Spark present two different thoughts</strong>
+&ndash; The classic one is that we use Spark as a distributed code compiler, plus with a task dispatcher and executors. In this way, <a href="http://www.eecs.berkeley.edu/~keo/">Kay Ousterhout</a> publish a paper called <a href="http://www.cs.berkeley.edu/~matei/papers/2013/sosp_sparrow.pdf">Sparrow: Distributed, Low Latency Scheduling</a> is the future. However, I don&rsquo;t think it is the best practice of Spark. The <a href="https://spark-project.atlassian.net/browse/SPARK-1006">DAG scheduler stack overflow</a> is also a big question as mentioned by <a href="http://www.cs.berkeley.edu/~matei/">Matei Zaharia</a>.</p>
+
+<h2>Introduction</h2>
+
+<p>In this PR, we propose a new implementation of <code>GradientDescent</code>, which follows a parallelism model we call BSP+, inspired by Jeff Dean&rsquo;s <a href="http://research.google.com/archive/large_deep_networks_nips2012.html">DistBelief</a> and Eric Xing&rsquo;s <a href="http://petuum.org/research.html">SSP</a>.  With a few modifications of <code>runMiniBatchSGD</code>, the BSP+ version can outperform the original sequential version by about 4x without sacrificing accuracy, and can be easily adopted by most classification and regression algorithms in MLlib.</p>
+
+<p>Parallelism of many ML algorithms are limited by the sequential updating process of optimization algorithms they use.  However, by carefully breaking the sequential chain, the updating process can be parallelized.  In the BSP+ version of <code>runMiniBatchSGD</code>, we split the iteration loop into multiple supersteps.  Within each superstep, an inner loop that runs a local optimization process is introduced into each partition.  During the local optimization, only local data points in the partition are involved.  Since different partitions are processed in parallel, the local optimization process is natually parallelized.  Then, at the end of each superstep, all the gradients and loss histories computed from each partition are collected and merged in a bulk synchronous manner.</p>
+
+<p>This modification is very localized, and hardly affects the topology of RDD DAGs of ML algorithms built above.  Take <code>LogisticRegressionWithSGD</code> as an example, here is the RDD DAG of a 3-iteration job with the original sequential <code>GradientDescent</code> implementation:</p>
+
+<p><img src="https://f.cloud.github.com/assets/2637239/1901663/dbd44be0-7c67-11e3-8c44-800a10f6d92a.jpg" title="Original version of `LogisticRegressionWithSGD`" alt="123" /></p>
+
+<p><strong>Figure 1. RDD DAG of the original LR (3-iteration)</strong></p>
+
+<p>And this is the RDD DAG of the one with BSP+ <code>GradientDescent</code>:</p>
+
+<p><img src="https://f.cloud.github.com/assets/2637239/1901664/e5fea980-7c67-11e3-9e24-5c9978d94d02.jpg" title="BSP+ version of `LogisticRegressionWithSGD`" alt="234" /></p>
+
+<p><strong>Figure 2. RDD DAG of the BSP+ LR (3-iteration)</strong></p>
+
+<h2>Experiments</h2>
+
+<p>To profile the accuracy and efficiency, we have run several experiments with both versions of <code>LogisticRegressionWithSGD</code>:</p>
+
+<ul>
+<li><p>Dataset: the unigram subset of the public <a href="http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html">web spam detection dataset</a></p>
+
+<ul>
+<li>Sample count: 350,000</li>
+<li>Feature count: 254</li>
+<li>File size: 382MB</li>
+</ul>
+</li>
+<li><p>Hardware:</p>
+
+<ul>
+<li>Nodes count: 15</li>
+<li>CPU core count: 120</li>
+</ul>
+</li>
+<li><p>Spark memory configuration:</p>
+
+<ul>
+<li><code>SPARK_MEM</code>: 8g</li>
+<li><code>SPARK_WORK_MEMORY</code>: 10g</li>
+</ul>
+</li>
+</ul>
+
+
+<p>Experiment results are presented below.</p>
+
+<h3>Rate of convergence</h3>
+
+<p><img src="https://f.cloud.github.com/assets/2637239/1909932/affb2118-7d09-11e3-8b59-abe2584d88cd.png" alt="08" /></p>
+
+<p><strong>Figure 3. Rate of convergence</strong></p>
+
+<p><img src="https://f.cloud.github.com/assets/2637239/1917187/9a808e16-7d8d-11e3-8e8e-0d279d7f5cbc.png" alt="graph3" /></p>
+
+<p><strong>Figure 3.1 Rate of convergence W.R.T. time elapsed</strong></p>
+
+<p>Experiment parameters:</p>
+
+<ul>
+<li><p>BSP+ version:</p>
+
+<ul>
+<li>Superstep count: 20</li>
+<li>Local optimization iteration count: 20</li>
+</ul>
+</li>
+<li><p>Original version:</p>
+
+<ul>
+<li>Iteration count: 20</li>
+</ul>
+</li>
+</ul>
+
+
+<p>Notice that in the case of BSP+, actually <code>20 * 20 = 400</code> iterations are computed, but the per-partition local optimization iterations are executed <em>in parallel</em>.  From figure 3 we can see that the BSP+ version converges at superstep 4 (80 iterations), and the result after superstep 3 is already better than the final result of the original LR. From figure 3.1 we can get a more clear insight of the speedup.</p>
+
+<p><img src="https://f.cloud.github.com/assets/2637239/1909937/d5dc6248-7d09-11e3-922f-89fcc4431ef0.png" alt="07" /></p>
+
+<p><strong>Figure 4. Iteration/superstep time</strong></p>
+
+<p>Next, let&rsquo;s see the time consumption.  Figure 4 shows that single superstep time of BSP+ LR is about 1.6 to 1.9 times of single iteration time of the original LR.  Since the final result of original LR doesn&rsquo;t catch up with superstep 3 of BSP+ LR, we may conclude that BSP+ is at least <code>(20 * 6 * 10^9 ns) / (3 * 1.2 * 10^10 ns) = 3.33</code> times faster than the original LR. Actually it has 4.3x performance gain in comparison with original LR, as depicted in figure 3.1. The main reason is that: the original version submits 1 job per iteration, while the BSP+ version submits 1 job per superstep, and per partition local optimization doesn&rsquo;t involve any job submission.</p>
+
+<h3>Correctness</h3>
+
+<p><img src="https://f.cloud.github.com/assets/2637239/1909941/f05122b2-7d09-11e3-84b4-10a81ac0b14a.png" alt="09" /></p>
+
+<p><strong>Figure 5. Loss history</strong></p>
+
+<p>Experiment parameters:</p>
+
+<ul>
+<li><p>BSP+ version:</p>
+
+<ul>
+<li>Superstep count: 20</li>
+<li>Local optimization iteration count: 20</li>
+</ul>
+</li>
+<li><p>Original version:</p>
+
+<ul>
+<li>Iteration count: 80</li>
+</ul>
+</li>
+</ul>
+
+
+<p>In this experiment, we compare the loss histories of both versions of LR.  We can see that BSP+ gives better answer much faster.</p>
+
+<h3>Relationship between parallelism and the rate of convergence</h3>
+
+<p><img src="https://f.cloud.github.com/assets/2637239/1909944/1379794c-7d0a-11e3-8a1f-7e3401422cf7.png" alt="10" /></p>
+
+<p><strong>Figure 6. Iteration/superstep time under different #partitions</strong></p>
+
+<p><img src="https://f.cloud.github.com/assets/2637239/1909945/2044fa70-7d0a-11e3-811d-359c20e2e0d6.png" alt="13" /></p>
+
+<p><strong>Figure 7. Job time under different #partitions</strong></p>
+
+<p>Experiment parameter:</p>
+
+<ul>
+<li><p>BSP+ version:</p>
+
+<ul>
+<li>Superstep count: 20</li>
+<li>Local optimization iteration count: 20</li>
+</ul>
+</li>
+<li><p>Original version:</p>
+
+<ul>
+<li>Iteration count: 20</li>
+</ul>
+</li>
+</ul>
+
+
+<p>In the case of BSP+, by adjusting minimal number of partitions (actual partition number is decided by the <code>HadoopRDD</code> class), we can explore the relationship between parallelism and the rate of convergence.  From figure 6 and figure 7 we can see, not surprisingly, single iteration/superstep time and job time decrease when number of partitions increases.</p>
+
+<p><img src="https://f.cloud.github.com/assets/2637239/1909947/34517656-7d0a-11e3-90bd-029cf802e35a.png" alt="14" /></p>
+
+<p><strong>Figure 8. Job time under different #partitions.  Each job converges to roughly the same level.</strong></p>
+
+<p>Experiment parameter:</p>
+
+<ul>
+<li><p>BSP+ version:</p>
+
+<ul>
+<li>Local optimization iteration count: 20</li>
+<li>All jobs runs until they converges to roughtly the same level</li>
+</ul>
+</li>
+</ul>
+
+
+<p>Then follows the interesting part.  In figure 8, several jobs are executed under different number of partitions.  By adjusting superstep count, we make all jobs converges to roughly the same level, and compare their job time.  The figure shows that the job time is a convex curve, whose inflection point occurs when #partition is 45.  So here is a trade off between parallelism and the rate of convergence: we cannot always increase the rate of convergence by increasing parallelism, since more partition implies fewer sample points within a single partition, and poorer accuracy for the parallel local optimization processes.</p>
+
+<h2>Acknowledgement</h2>
+
+<p>Thanks @liancheng for the prototype implementation of the BSP+ SGD.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -394,6 +620,10 @@
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/18/how-to-use-spark-for-ml-algorithms-and-why/">How to Use Spark for ML Algorithms and Why ?</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/01/17/adl45-meeting-record/">ADL45 Meeting Record</a>
