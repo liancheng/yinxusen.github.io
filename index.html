@@ -107,6 +107,16 @@
 
 <p><strong>Update 2014-01-18</strong> We also find that there are some influences come from the partition number. As we said earlier, there is a inflection point.</p>
 
+<p><strong>Update 2014-01-18 [2]</strong> We test SVM with BSP+, it runs cool. We also modify LASSO, RidgeRegression, LinearRegression.</p>
+
+<p><strong>Update 2014-01-18 [3]</strong> BSP+ SVM beats original SVM 7 倍，是不是JobLogger或者时间的统计会影响性能？因为后者打印的log数量非常庞大。经过验证，阎栋加入的JobLogger没有那么严重的影响。由系统加入的TaskLog和DAGLog不知道怎么停。</p>
+
+<p><strong>Update 2014-01-18 [4]</strong> 思考一个问题，为什么同样的工作量，60次混合会比传统的梯度下降要好？要能解释这一点。差异只在混合策略上，例如，我有一个想法，还没想清楚呢就跟别人说了，搞得大家都不明白。如果自己想清楚了，再跟别人说会更明白。</p>
+
+<p><strong>Update 2014-01-18 [5]</strong> BSP+快的原因，因为同步次数少了，导致网络开销同比减少。所以结果比原始情况好。大大的提升通信量，才能展现出我们的优势。</p>
+
+<p><strong>Update 2014-01-18 [6]</strong> 找了一个新数据，这份数据2000维度，30多个GB，比之前的unigram好，但又比trigram少，可见mllib之废物，1000w的维度就已经跪了！！这还做毛个大数据啊？本来像自己动手生成数据集，但是总感觉不好。网上找到一个新的。找新数据的目的就是增加维度，这样让每次迭代之间传输的数据量更大，我们的优势更加明显。</p>
+
 <p><strong>factors we found</strong></p>
 
 <ul>
@@ -117,8 +127,13 @@
 </ul>
 
 
-<p><strong>two different usages of Spark present two different thoughts</strong>
-&ndash; The classic one is that we use Spark as a distributed code compiler, plus with a task dispatcher and executors. In this way, <a href="http://www.eecs.berkeley.edu/~keo/">Kay Ousterhout</a> publish a paper called <a href="http://www.cs.berkeley.edu/~matei/papers/2013/sosp_sparrow.pdf">Sparrow: Distributed, Low Latency Scheduling</a> is the future. However, I don&rsquo;t think it is the best practice of Spark. The <a href="https://spark-project.atlassian.net/browse/SPARK-1006">DAG scheduler stack overflow</a> is also a big question as mentioned by <a href="http://www.cs.berkeley.edu/~matei/">Matei Zaharia</a>.</p>
+<p><strong>Two different usages of Spark present two different thoughts</strong></p>
+
+<ul>
+<li><p>The classic one is that we use Spark as a distributed code compiler, plus with a task dispatcher and executors. In this way, <a href="http://www.eecs.berkeley.edu/~keo/">Kay Ousterhout</a> publish a paper called <a href="http://www.cs.berkeley.edu/~matei/papers/2013/sosp_sparrow.pdf">Sparrow: Distributed, Low Latency Scheduling</a> is the future. However, I don&rsquo;t think it is the best practice of Spark. The <a href="https://spark-project.atlassian.net/browse/SPARK-1006">DAG scheduler stack overflow</a> is also a big question as mentioned by <a href="http://www.cs.berkeley.edu/~matei/">Matei Zaharia</a>.</p></li>
+<li><p>A more natural way to use Spark W.R.T. machine learning is treat Spark as a effective distributed executive container. Data with cache stay in each executor, computing flow over these data, and feedback parameters to drivers again and again.</p></li>
+</ul>
+
 
 <h2>Introduction</h2>
 
