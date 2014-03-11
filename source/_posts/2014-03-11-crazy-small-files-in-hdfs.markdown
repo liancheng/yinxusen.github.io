@@ -36,15 +36,15 @@ key ideas:
 
 **LDA best practice:**
 
-I think there are two common ways to use LDA in practice. First is the use in experimental condition, say, you have a bunch of small files on your disk. Then you want to upload them into HDFS, and call LDA in Spark. This is a usual way if you just want to do some experiments with LDA. In other words, it is an off-line training process. The second way of using LDA is an industrial use. You may have a streaming pipe, which will transport new feeds in Twitter or some other websites into your system. You will choose to put those feeds into a distributed storage such as HDFS or HBase, or you just send the streaming into a process.
+I think there are two common ways to use LDA in practice. First is the use in experimental condition, say, you have a bunch of small files on your disk. Then you want to upload them into HDFS, and call LDA in Spark. This is a usual way if you just want to do some experiments with LDA. In other words, it is an off-line training process. The second way of using LDA is an industrial use. You may have a streaming pipe, which feeds new data from Twitter or some other websites into your system. You may choose to put those data into a distributed storage such as HDFS or HBase, or you just process the data stream.
 
 Think them boldly, they are totally different. With respect to the usage of LDA, we should take care of the two scenarios simultaneously. Both of them are useful so we should not give up each of them.
 
 **Offline scenario of LDA**
 
-In the offline scenario, you may not charge of the pre-processing, instead you just leave it to the end-user. Users will change the raw texts into the format you want, and upload them into HDFS so your LDA application can read them directly. In this way, what we need to do is just specify the input format. What a relief !
+In the offline scenario, maybe you are not responsible for pre-processing. Instead, you just leave it to the end-user. Users transform the raw texts into the format you specify, and upload them into HDFS so your LDA application can read them directly. In this way, what we need to do is just specify the input format. What a relief !
 
-Maybe you can help end-users one step more. You write a program, single or parallel, whatever, to help the pre-process for end-user. Just like what Mahout does. End-user should write a ugly shell program as coordinator, to control the overall workflow. In this way, you can write a program to change the small files (raw texts) into a huge file which lines represents texts, with filenames in the front of the line plus a separator.
+Maybe you can help end-users one step more. You write a program, sequential or parallel, whichever is OK, to help the pre-processing for end-user. Just like what Mahout does. End-user may write an ugly shell program as coordinator, to control the overall workflow. In this way, you can write a program to transform the small files (raw texts) into a huge file which lines represents texts, with filenames in the front of the line plus a separator.
 
 But, I think a better way is melding the pre-process with LDA. What the end-user does is just upload his raw texts on HDFS. In this way, we must provide the function to read all texts and their corresponding filenames in. Then we implement a `CombineFileInputFormat`, a `CombineFileRecordReader`, a `FileLineWritable` and an interface looks like `textFiles` to support the scenario.
 
