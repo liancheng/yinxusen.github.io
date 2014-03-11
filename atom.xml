@@ -4,7 +4,7 @@
   <title><![CDATA[wtf AI ?]]></title>
   <link href="http://yinxusen.github.io/atom.xml" rel="self"/>
   <link href="http://yinxusen.github.io/"/>
-  <updated>2014-03-11T16:57:04+08:00</updated>
+  <updated>2014-03-11T17:00:02+08:00</updated>
   <id>http://yinxusen.github.io/</id>
   <author>
     <name><![CDATA[Xusen]]></name>
@@ -18,35 +18,24 @@
     <link href="http://yinxusen.github.io/blog/2014/03/11/crazy-small-files-in-hdfs/"/>
     <updated>2014-03-11T16:28:47+08:00</updated>
     <id>http://yinxusen.github.io/blog/2014/03/11/crazy-small-files-in-hdfs</id>
-    <content type="html"><![CDATA[<p>癫狂小文件：由small files input探索HDFS：功用、功效、策略</p>
+    <content type="html"><![CDATA[<p>key ideas:</p>
 
-<p>Spark的处理方式：partition自己定制，把n<sup>2</sup>的shuffle变成n的？</p>
+<ul>
+<li><p>癫狂小文件：由small files input探索HDFS：功用、功效、策略</p></li>
+<li><p>Spark的处理方式：partition自己定制，把O(n<sup>2</sup>)的shuffle变成O(n)的？</p></li>
+<li><p>Hbase作为替代</p></li>
+<li><p>Hdfs combine file与multi file对比，后者为什么倍deprecated</p></li>
+<li><p>Shuffle为什么存在，如何避免，是在底层（HDFS）还是在上层（Spark应用）？</p></li>
+<li><p>偶尔要为replication容错付出更多代价</p></li>
+<li><p>Combine file input format，blog上错误多影响广，以及不友好的API，糟糕的示例和注释。</p></li>
+<li><p>实际场景？学术研究VS线上应用。什么才是LDA输入的最佳实践？Mahout的处理方式？</p></li>
+<li><p>文件系统的设计思考，可引入我自己的文件系统。</p></li>
+<li><p>代码的简洁如何保证？同时如何保证性能？隐藏在简洁代码中的黑魔法。</p></li>
+<li><p>Partition，split，以及种种locaility preserve的思考（为什么程序性能这么差？1024个partition从何而来？）</p></li>
+<li><p>Google在bigtable和GFS的思考</p></li>
+<li><p>LineRecorder中的readline函数如何实现越过block向后看？</p></li>
+</ul>
 
-<p>Hbase作为替代</p>
-
-<p>Hdfs combine file与multi file对比，后者为什么倍deprecated</p>
-
-<p>Shuffle为什么存在，如何避免，是在底层（HDFS）还是在上层（Spark应用）？</p>
-
-<p>偶尔要为replication容错付出更多代价</p>
-
-<p>Combine file input format，blog上错误多影响广，以及不友好的API，糟糕的示例和注释。</p>
-
-<p>实际场景？学术研究VS线上应用。什么才是LDA输入的最佳实践？Mahout的处理方式？</p>
-
-<p>小文件的疯癫</p>
-
-<p>文件系统的设计思考，可引入我自己的文件系统。</p>
-
-<p>代码的简洁如何保证？同时如何保证性能？隐藏在简洁代码中的黑魔法。</p>
-
-<p>Partition，split，以及种种locaility preserve的思考（为什么程序性能这么差？1024个partition从何而来？）</p>
-
-<p>Google在bigtable和GFS的思考</p>
-
-<p>文件切断很讨厌，尤其是multi-byte字符</p>
-
-<p>LineRecorder中的readline函数如何实现越过block向后看？</p>
 
 <p><strong>LDA best practice:</strong></p>
 
