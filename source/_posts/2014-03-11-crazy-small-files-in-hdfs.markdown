@@ -34,6 +34,14 @@ key ideas:
 
 - LineRecorder中的readline函数如何实现越过block向后看？
 
+**Background**
+
+2 months ago, I intent to contribute a LDA algorithm to Spark, coordinate with my parallel machine learning paper. After I finished the core of LDA - the Gibbs sampling, I find that there are some trivial matters in the way of creating a usable LDA. Mostly, they are the pre-processing of text files. For the word segmentation, both Chinese and English, I wrap Lucene with a piece of scala code to support that. But the input format traps me lots of time.
+
+The standard input format of Spark is from the interface called `textFiles(path, miniSplit)` in the `SparkContext` class. But it is a line processor, which digest one line each time. But what I want is a KV processor, i.e. I need an interface which can return me a KV pair (fileName, content) given a directory path. So I try to write my own `InputFormat`.
+
+Firstly, I try to use the `lineReader` and handle the fragments of blocks myself, later I find that it's both ugly and unnecessary. So I use a more low level interface named `FSDataInputStream` to read an entire block once time. However, there are still some details need to be improved. Here, let's begin our explore. 
+
 **LDA best practice:**
 
 I think there are two common ways to use LDA in practice. First is the use in experimental condition, say, you have a bunch of small files on your disk. Then you want to upload them into HDFS, and call LDA in Spark. This is a usual way if you just want to do some experiments with LDA. In other words, it is an off-line training process. The second way of using LDA is an industrial use. You may have a streaming pipe, which will transport new feeds in Twitter or some other websites into your system. You will choose to put those feeds into a distributed storage such as HDFS or HBase, or you just send the streaming into a process.
@@ -79,4 +87,3 @@ So there are the trade-offs between "shuffle HDFS level" with "shuffle Spark lev
 **Rethink the design of file system, efficiency and robustness**
 
 **Rethink the compact code and black magic behind it**
-
