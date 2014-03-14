@@ -63,9 +63,9 @@ Think them boldly, they are totally different. With respect to the usage of LDA,
 
 ## Offline scenario of LDA
 
-In the offline scenario, you could not charge of the pre-processing, instead you just leave it to the end-user. Users will change the raw texts into the format you want, and upload them into HDFS so your LDA application can read them directly. In this way, what we need to do is just specify the input format. What a relief !
+In the offline scenario, maybe you are not responsible for pre-processing. Instead, you just leave it to the end-user. Users transform the raw texts into the format you specify, and upload them into HDFS so your LDA application can read them directly. In this way, what we need to do is just specify the input format. What a relief !
 
-Maybe you can help end-users one step more. You write a program, single or parallel, whatever, to help the pre-process for end-user. Just like what Mahout does. End-user should write a ugly shell program as coordinator, to control the overall workflow. In this way, you can write a program to change the small files (raw texts) into a huge file which lines represents texts, with filenames in the front of the line plus a separator.
+Maybe you can help end-users one step more. You write a program, sequential or parallel, whichever is OK, to help the pre-processing for end-user. Just like what Mahout does. End-user may write an ugly shell program as coordinator, to control the overall workflow. In this way, you can write a program to transform the small files (raw texts) into a huge file which lines represents texts, with filenames in the front of the line plus a separator.
 
 But, I think a better way is melding the pre-process with LDA. What the end-user does is just upload his raw texts on HDFS. In this way, we must provide the function to read all texts and their corresponding filenames in. Then we implement a `CombineFileInputFormat`, a `CombineFileRecordReader`, a `FileLineWritable` and an interface looks like `textFiles` to support the scenario.
 
