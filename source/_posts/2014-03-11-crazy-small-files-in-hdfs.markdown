@@ -8,11 +8,11 @@ categories:
 
 ## Background
 
-2 months ago, I intent to contribute a LDA algorithm to Spark, coordinate with my parallel machine learning paper. After I finished the core of LDA - the Gibbs sampling, I find that there are some trivial matters in the way of creating a usable LDA. Mostly, they are the pre-processing of text files. For the word segmentation, both Chinese and English, I wrap Lucene with a piece of scala code to support that, just like what [ScalaNLP](http://www.scalanlp.org/) does. But the input format traps me lots of time.
+2 months ago, I intended to contribute an LDA implementation to Spark, as part of my work of my parallel machine learning paper. After I finished the core part of LDA -- the Gibbs sampling, I found out that there were some subtle issues in the way of implementing a practical version of LDA. Mostly in input text files pre-processing. I wrapped Lucene with some Scala code to support Chinese and English word segmentation, just like what [ScalaNLP](http://www.scalanlp.org/) does. But the Hadoop input format issue bothered me a lot.
 
-The standard input format of Spark is from the interface called `textFiles(path, miniSplit)` in the `SparkContext` class. But it is a line processor, which digest one line each time. However what I want is a KV processor, i.e. I need an interface which can return me a KV pair (fileName, content) given a directory path. So I try to write my own `InputFormat`.
+The standard input format used by Spark is `TextLineFormat`, which appears in `SparkContext.textFiles(path: String, miniSplit: Int)`. But it is a line-based, which returns one text line per record. However, what I want is a KV processor, i.e., I need an interface which returns a bunch of KV pairs in the format of `(fileName, content)` given path to a directory containing all the input text files. So I tried to write my own `InputFormat`.
 
-Firstly, I try to use the `lineReader` and handle the fragments of blocks myself, later I find that it's both ugly and unnecessary, just as the code list below. I have to glue them together with a fixed seperator - '\n'. Instead of that, I use a more low level interface named `FSDataInputStream` to read an entire block once time. However, there are still some details need to be improved. Here, let's begin our explore. 
+Firstly, I tried to use `LineRecordReader` and handle fragments of blocks by myself. Later I found out that it was both ugly and unnecessary, just as the code listed below. I have to glue them together with a fixed separator - `'\n'`. Instead of that, I use a more low level interface named `FSDataInputStream` to read an entire block once time. However, there are still some details need to be improved. Here, let's begin our explore. 
 
 {% codeblock lineReader version RecordReader (the terrible version) - BatchFileRecordReader.java lang:java%}
 
@@ -140,9 +140,9 @@ Second, `CombineFileInputFormat` cannot preserve the property for us, due to the
 
 So there are the trade-offs between "shuffle HDFS level" with "shuffle Spark level", and between "efficiency when reading blocks" with "efficiency due to shuffle-free", and eventually between "efficiency" with "security".
 
-## Take a deep breath - Full disclosure of locaility in Hadoop
+## Take a deep breath - Full disclosure of locality in Hadoop
 
-To get into the secret of locaility of Hadoop IO, I have to look deep into `InputFormat` code in `mapred`. Due to the use of Spark, I choose `FileInputFormat` as the breach. First you should keep these concepts in mind, which will be used commonly later. They are *rack*, *node*, *file*, *block*, *replica*. A rack is composed of several nodes, nodes are machines composing HDFS in Hadoop. A file is composed of several blocks. A block could have several replicas, usually 3 copies. Note that your Hadoop workers could cover all HDFS nodes, but there could also mismatch between Hadoop workers and HDFS nodes. Note also that replicas of a block are usually span different racks, due to the consideration of robustness.
+To grasp the secret of locality of Hadoop IO, I had to dive deep into `InputFormat` code in `mapred`. Due to the use of Spark, I choose `FileInputFormat` as the breach. First you should keep these concepts in mind, which will be used commonly later. They are *rack*, *node*, *file*, *block* and *replica*. A rack is composed of several nodes, nodes are machines composing HDFS in Hadoop. A file is composed of several blocks. A block could have several replicas, by default 3. Note that your Hadoop workers could cover all HDFS nodes, but there could also mismatch between Hadoop workers and HDFS nodes. Note also that replicas of a block are usually span different racks, due to the consideration of robustness.
 
 Things could be a little bit more complicated, if we add the workers of Hadoop in. Program could span across different workers, data could span across different nodes. So, question is, how to arrange the mapping of programs in each worker and blocks in each node, to get the best locaility, i.e. the less network communication when reading files on HDFS?
 
