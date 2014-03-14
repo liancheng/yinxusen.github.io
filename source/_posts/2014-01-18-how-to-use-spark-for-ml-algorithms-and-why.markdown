@@ -40,6 +40,8 @@ If there is no straggler at all, the costs caused by framework must be higher th
 
 - A more natural way to use Spark W.R.T. machine learning is treat Spark as a effective distributed executive container. Data with cache stay in each executor, computing flow over these data, and feedback parameters to drivers again and again.
 
+<!--more-->
+
 ## Introduction
 
 In this PR, we propose a new implementation of `GradientDescent`, which follows a parallelism model we call BSP+, inspired by Jeff Dean's [DistBelief](http://research.google.com/archive/large_deep_networks_nips2012.html) and Eric Xing's [SSP](http://petuum.org/research.html).  With a few modifications of `runMiniBatchSGD`, the BSP+ version can outperform the original sequential version by about 4x without sacrificing accuracy, and can be easily adopted by most classification and regression algorithms in MLlib.

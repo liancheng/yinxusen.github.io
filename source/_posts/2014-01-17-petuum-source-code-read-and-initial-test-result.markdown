@@ -10,7 +10,9 @@ categories:
 
 Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码，其实就只实现了一个LDA，外加一个Hello world。目前没有一个pull request和issue，另外已经很久（20天）没有更新了。发现C++写的在github上不是很受欢迎，GraphLab也很少有pull request。相比之下Spark的Pull request之多，热度完全不同。
 
-**一级目录有：**
+<!--more-->
+
+## 一级目录有：
 
 - Apps：LDA以及Hello world的具体实现
 
@@ -38,7 +40,7 @@ Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码�
 
 - Util：逻辑时钟vector clock，就是Dynamo中的策略，以及一些小组件
 
-**以LDA为例（也没有别的例子），其大体逻辑如下：**
+## 以LDA为例（也没有别的例子），其大体逻辑如下：
 
 1. 初始化tablegroup，用于存储一系列table
 
@@ -58,7 +60,7 @@ Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码�
 
 9. 关闭线程，table group，并结束
 
-**整个过程中，8是实际干活的，也是唯一并行的地方。将这部分放大如下：**
+## 整个过程中，8是实际干活的，也是唯一并行的地方。将这部分放大如下：
 
 1. 初始化每个线程拥有的数据，即数据分片，每个thread处理一片
 
@@ -72,7 +74,7 @@ Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码�
 
 6. 结束，输出结果
 
-**其中5是主要干活的，这里每个thread针对自己的一片文件进行sampling操作。该部分放大如下：**
+## 其中5是主要干活的，这里每个thread针对自己的一片文件进行sampling操作。该部分放大如下：
 
 1. 初始化wordsampler
 
@@ -82,7 +84,7 @@ Petuum共有9050行代码，代码文件数39个。整个Petuum这么多源码�
 
 4. barrier混合当前状态
 
-**这里有一些取巧的地方，也是表现处SSP的地方。**
+## 这里有一些取巧的地方，也是表现处SSP的地方。
 
 首先是初始化wordsampler的时候，需要从server获取最新的参数，这时参数请求不是发给server，而是发给本thread的cache，本thread cache合法则使用，否则使用本process的cache，合法则使用，否则才去server请求参数。（合法与否通过iteration的步子是否过于stale判断）。而向server请求参数也不是直接发送，是由clientProxy向serverProxy请求，serverProxy向server群体广播这个消息，拿到参数值。
 
